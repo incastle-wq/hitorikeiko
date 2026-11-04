@@ -4,27 +4,25 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.dep.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
-      - name: Stamp version
+      - name: Build
         run: |
           sed -i "s/__VER__/1.${{ github.run_number }}/" www/index.html
           sed -i "s/hk-dev/hk-${{ github.run_number }}/" www/sw.js
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: www
-      - id: dep
-        uses: actions/deploy-pages@v4
+          touch www/.nojekyll
+      - name: Push to gh-pages
+        run: |
+          cd www
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm "Deploy ${{ github.sha }}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
