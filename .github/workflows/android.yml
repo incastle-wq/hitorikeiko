@@ -43,6 +43,9 @@ jobs:
         run: |
           keytool -exportcert -keystore android-debug.keystore -storepass android -alias androiddebugkey -file key.der
           python3 -c "import sys;d=open('key.der','rb').read();b=open('hitori-keiko.apk','rb').read();sys.exit(0 if d in b else 'APK is not signed with the repo key')"
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          $BT/apksigner verify --verbose --print-certs hitori-keiko.apk
+          $BT/aapt2 dump badging hitori-keiko.apk | grep -E "package:|sdkVersion|targetSdk"
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.${{ github.run_number }}
