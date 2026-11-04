@@ -276,7 +276,9 @@ p,h1,h2,h3{margin:0}
 .bd-legend{font-size:.72rem;color:var(--muted);margin-top:6px}
 .fc-back .nt{text-align:left;align-self:stretch;background:var(--sunk);border-radius:12px;padding:10px 12px;margin-top:8px}
 .fb .nt,.fc-back .nt{font-size:.84rem;line-height:1.55;color:var(--ink);opacity:.85;margin-top:4px;max-width:60ch}
-.l-foot .foot-in{max-height:60vh;overflow-y:auto}
+.fb-scroll{max-height:min(42vh,360px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-right:2px}
+.l-foot{padding-bottom:max(12px,env(safe-area-inset-bottom,0px))}
+.lesson{height:100%;height:100dvh}
 .skip-t{font-size:.8rem;font-weight:700;color:var(--muted);background:none;border:0;cursor:pointer;padding:6px 2px;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .skip-t[aria-pressed="true"]{color:var(--shu);text-decoration:none}
 .done{align-items:center;text-align:center;padding-top:30px}
@@ -854,7 +856,7 @@ function renderFootResult(ok,typo){const q=L.qs[L.i];const it=q.item||q.fbItem;l
   let detail='';
   if(it&&q.type!=='match'){const r=readOf(it);detail=`<span class="jp">${esc(it.j)}</span>${r?`<span class="rd">${esc(r)}</span>`:''}${it.kana?`<span class="hint">${esc(it.m)} · ${esc(it.h)}</span>`:`${it.h?`<span class="hint">${esc(it.h)}${it.m?' · '+esc(it.m):''}</span>`:''}<span class="ko">${esc(it.k)}</span>`}${it.n?`<span class="nt">${esc(it.n)}</span>`:''}${bdHtml(it)}`;}
   const skipOn=q.item&&(st(q.item.id)||{}).skip;
-  footIn.innerHTML=`<div class="fb">${mascot(ok?(L.combo>=5?'cheer':'happy'):'oops',50)}${it&&q.type!=='match'?`<button class="say sm" data-say="fb" aria-label="정답 발음 듣기">${ICON.play}</button>`:''}<div class="body"><h3>${title}</h3>${detail}</div></div><div class="foot-row">${q.item&&ok?`<button class="skip-t" id="skipT" aria-pressed="${skipOn?'true':'false'}">${skipOn?'다시 안 봐요':'쉬웠어요 · 다시 안 보기'}</button>`:''}<button class="btn ${ok?'ok':'ng'}" id="nextBtn">계속</button></div>`;
+  footIn.innerHTML=`<div class="fb-scroll"><div class="fb">${mascot(ok?(L.combo>=5?'cheer':'happy'):'oops',50)}${it&&q.type!=='match'?`<button class="say sm" data-say="fb" aria-label="정답 발음 듣기">${ICON.play}</button>`:''}<div class="body"><h3>${title}</h3>${detail}</div></div></div><div class="foot-row">${q.item&&ok?`<button class="skip-t" id="skipT" aria-pressed="${skipOn?'true':'false'}">${skipOn?'다시 안 봐요':'쉬웠어요 · 다시 안 보기'}</button>`:''}<button class="btn ${ok?'ok':'ng'}" id="nextBtn">계속</button></div>`;
   if(!RM){footIn.classList.remove('rise-up');void footIn.offsetWidth;footIn.classList.add('rise-up');}
   $('#nextBtn').focus({preventScroll:true});}
 function next(){if(!L)return;L.i++;if(L.i>=L.qs.length)return renderDone();renderQ();}
@@ -1009,7 +1011,7 @@ const MP=new Map();
 function modelPts(ch){if(MP.has(ch))return MP.get(ch);const ds=STROKES[ch]||[];const out=ds.map(d=>{const p=document.createElementNS(svgNS,'path');p.setAttribute('d',d);sampler.appendChild(p);let L0=0;try{L0=p.getTotalLength()}catch(e){}const n=Math.max(8,Math.ceil(L0/2.5)),pts=[];for(let i=0;i<=n;i++){let q={x:0,y:0};try{q=p.getPointAtLength(L0*i/n)}catch(e){}pts.push([q.x/109,q.y/109])}p.remove();return pts});MP.set(ch,out);return out}
 function wChars(){const conv=c=>W.script==='k'?toKata(c):c;
   if(W.row==='mix')return shuffle(KB.slice(0,69).map(k=>conv(k[0]))).slice(0,10);
-  if(W.row==='weak'){const pre=W.script==='k'?'k':'h';const arr=KB.slice(0,69).map(k=>conv(k[0])).filter(c=>S.write[pre+c]).sort((a,b)=>S.write[pre+a].last-S.write[pre+b].last).filter(c=>S.write[pre+c].last<80).slice(0,10);return arr;}
+  if(W.row==='weak'){const pre=W.script==='k'?'k':'h';const arr=KB.slice(0,69).map(k=>conv(k[0])).filter(c=>S.write[pre+c]).sort((a,b)=>S.write[pre+a].last-S.write[pre+b].last).filter(c=>S.write[pre+c].last<WPASS).slice(0,10);return arr;}
   const r=WROWS.find(x=>x[0]===W.row)||WROWS[0];return KB.slice(r[1],r[1]+r[2]).map(k=>conv(k[0]));}
 function wInfo(ch){return KINFO[toHira(ch)]||[ch,'','']}
 function wKey(ch){return (W.script==='k'?'k':'h')+ch}
@@ -1018,19 +1020,19 @@ function wReset(){W.strokes=[];W.cur=null;W.checked=null;W.anim=false;}
 function syncWriteCtl(){$('#wScript').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===W.script));
   $('#wMode').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===W.mode));
   const pre=W.script==='k'?'k':'h';
-  $('#wRows').innerHTML=WROWS.map(r=>{const c=W.script==='k'?toKata(r[0]):r[0];const chars=KB.slice(r[1],r[1]+r[2]).map(k=>W.script==='k'?toKata(k[0]):k[0]);const done=chars.every(x=>S.write[pre+x]&&S.write[pre+x].best>=80);return `<button data-v="${r[0]}" aria-pressed="${W.row===r[0]}"><span class="jp">${c}</span>행${done?' ✓':''}</button>`}).join('')+`<button data-v="mix" aria-pressed="${W.row==='mix'}">섞어서 10자</button><button data-v="weak" aria-pressed="${W.row==='weak'}">약한 글자</button>`;
+  $('#wRows').innerHTML=WROWS.map(r=>{const c=W.script==='k'?toKata(r[0]):r[0];const chars=KB.slice(r[1],r[1]+r[2]).map(k=>W.script==='k'?toKata(k[0]):k[0]);const done=chars.every(x=>S.write[pre+x]&&S.write[pre+x].best>=WPASS);return `<button data-v="${r[0]}" aria-pressed="${W.row===r[0]}"><span class="jp">${c}</span>행${done?' ✓':''}</button>`}).join('')+`<button data-v="mix" aria-pressed="${W.row==='mix'}">섞어서 10자</button><button data-v="weak" aria-pressed="${W.row==='weak'}">약한 글자</button>`;
   S.ui.wScript=W.script;S.ui.wRow=W.row;S.ui.wMode=W.mode;saveLocal();}
 function renderWrite(){syncWriteCtl();const a=$('#wArea');
   if(W.i>=W.list.length){const avg=W.scores.length?Math.round(W.scores.reduce((s,x)=>s+x[1],0)/W.scores.length):0;
-    a.innerHTML=`<div class="ctl"><p class="sec-h">이번 연습 결과 · 평균 ${avg}점</p><div class="w-sum">${W.scores.map(([c,s])=>`<div class="${s>=80?'good':s>=60?'mid':'bad'}"><span class="jp">${esc(c)}</span><small>${s}</small></div>`).join('')}</div><div class="row"><button class="btn" id="wAgain">같은 글자 다시</button><button class="btn primary" id="wNextRow">${W.row==='mix'||W.row==='weak'?'새로 섞기':'다음 행'}</button></div></div>`;return}
+    a.innerHTML=`<div class="ctl"><p class="sec-h">이번 연습 결과 · 평균 ${avg}점</p><div class="w-sum">${W.scores.map(([c,s])=>`<div class="${s>=80?'good':s>=WPASS?'mid':'bad'}"><span class="jp">${esc(c)}</span><small>${s}</small></div>`).join('')}</div><div class="row"><button class="btn" id="wAgain">같은 글자 다시</button><button class="btn primary" id="wNextRow">${W.row==='mix'||W.row==='weak'?'새로 섞기':'다음 행'}</button></div></div>`;return}
   const ch=W.list[W.i],[,m,h]=wInfo(ch),n=(STROKES[ch]||[]).length;const showChar=W.mode!=='blind'||W.checked;
   a.innerHTML=`<div class="w-prompt"><span class="w-char" aria-label="${showChar?esc(ch):'가려진 글자'}">${showChar?esc(ch):'？'}</span><div class="w-info"><b>${esc(m)} · ${esc(h)}</b><span>${n}획 · ${W.i+1} / ${W.list.length}</span></div><button class="say sm" id="wSay" aria-label="발음 듣기">${ICON.play}</button><button class="btn" id="wAnim" style="padding:8px 12px">획순</button></div>
   <div class="pad-wrap"><canvas class="pad" id="pad" aria-label="글자 쓰는 칸"></canvas><svg class="pad-svg" id="padSvg" viewBox="0 0 109 109" aria-hidden="true"></svg></div>
-  ${W.checked?wResHtml(W.checked):''}
-  <div class="w-tools">${W.checked?`<button class="btn" id="wRetry" style="grid-column:span 2">다시 쓰기</button><button class="btn primary" id="wNext">다음 글자</button>`:`<button class="btn" id="wUndo">되돌리기</button><button class="btn" id="wClear">지우기</button><button class="btn primary" id="wCheck">확인</button>`}</div>`;
+  <div class="w-tools">${W.checked?`<button class="btn" id="wRetry" style="grid-column:span 2">다시 쓰기</button><button class="btn primary" id="wNext">다음 글자</button>`:`<button class="btn" id="wUndo">되돌리기</button><button class="btn" id="wClear">지우기</button><button class="btn primary" id="wCheck">확인</button>`}</div>
+  ${W.checked?wResHtml(W.checked):''}`;
   setupPad();if(W.checked)showModel(false);}
-function wResHtml(r){const cls=r.score>=80?'good':r.score>=60?'mid':'bad';
-  return `<div class="w-res ${cls}"><div class="top-line"><span class="sc">${r.score}</span><b>${r.score>=80?'아주 좋아요':r.score>=60?'괜찮아요':'다시 써 볼까요'}</b>${mascot(r.score>=80?'cheer':r.score>=60?'happy':'oops',52)}</div><ul>${r.notes.map(x=>`<li>${x}</li>`).join('')}</ul></div>`}
+function wResHtml(r){const cls=r.score>=80?'good':r.score>=WPASS?'mid':'bad';
+  return `<div class="w-res ${cls}"><div class="top-line"><span class="sc">${r.score}</span><b>${r.score>=80?'아주 좋아요':r.score>=WPASS?'통과! 잘 썼어요':'조금 더 비슷하게 써 볼까요'}</b>${mascot(r.score>=80?'cheer':r.score>=WPASS?'happy':'oops',52)}</div><ul>${r.notes.map(x=>`<li>${x}</li>`).join('')}</ul></div>`}
 let pad,pctx,padRO=null;
 function setupPad(){pad=$('#pad');pctx=pad.getContext('2d');if(padRO)padRO.disconnect();padRO=new ResizeObserver(sizePad);padRO.observe(pad);sizePad();
   pad.onpointerdown=e=>{if(W.checked)return;e.preventDefault();try{pad.setPointerCapture(e.pointerId)}catch(_){}W.anim=false;$('#padSvg').innerHTML='';W.cur=[ptOf(e)];W.strokes.push(W.cur);drawPad();};
@@ -1058,29 +1060,31 @@ function raster(strokes,lw){const N=64,c=document.createElement('canvas');c.widt
   for(const s of strokes){x.beginPath();s.forEach(([a,b],i)=>{const X=(a*.8+.5)*N,Y=(b*.8+.5)*N;i?x.lineTo(X,Y):x.moveTo(X,Y)});if(s.length===1){const X=(s[0][0]*.8+.5)*N,Y=(s[0][1]*.8+.5)*N;x.lineTo(X+.3,Y)}x.stroke();}
   const d=x.getImageData(0,0,N,N).data,m=new Uint8Array(N*N);for(let i=0;i<N*N;i++)m[i]=d[i*4+3]>60?1:0;return m}
 function overlap(a,b){let n=0,t=0;for(let i=0;i<a.length;i++)if(a[i]){t++;if(b[i])n++}return t?n/t:0}
+function chamfer(U,M){const thin=a=>{const f=a.flat();const k=Math.max(1,Math.ceil(f.length/160));return f.filter((_,i)=>i%k===0)};const a=thin(U),b=thin(M);
+  const d=(A,B)=>{let t=0;for(const p of A){let m=1e9;for(const q of B){const e=(p[0]-q[0])**2+(p[1]-q[1])**2;if(e<m)m=e}t+=Math.sqrt(m)}return t/A.length};return (d(a,b)+d(b,a))/2}
+const WPASS=55;
 function scoreWrite(ch){const user=W.strokes.filter(s=>s.length>0),model=modelPts(ch);
   if(!user.length)return null;const U=bboxNorm(user),M=bboxNorm(model);
   const P=overlap(raster(U,3.5),raster(M,8)),R=overlap(raster(M,3.5),raster(U,8));const shape=P+R?2*P*R/(P+R):0;
-  let score=Math.max(0,Math.min(1,(shape-.55)/(.9-.55)))*100;const notes=[];
-  notes.push(`모양 일치 ${Math.round(shape*100)}%`);
+  const comb=.5*shape+.5*Math.max(0,1-chamfer(U,M)/.16);
+  const score=Math.round(Math.max(0,Math.min(1,(comb-.2)/(.62-.2)))*100);const notes=[];
+  notes.push(score>=WPASS?'모양이 잘 맞아요':'모양이 꽤 달라요. 빨간 글자와 비교해 보세요');
   const dn=user.length-model.length;
-  if(dn){score-=Math.min(36,Math.abs(dn)*12);notes.push(`획 수 ${user.length}획 → 정답은 ${model.length}획`);}else notes.push(`획 수 ${model.length}획 정확해요`);
-  if(!dn){let bad=0,rev=0;for(let i=0;i<M.length;i++){const us=U[i][0],ue=U[i][U[i].length-1],ms=M[i][0],me=M[i][M[i].length-1];const d=Math.hypot(us[0]-ms[0],us[1]-ms[1]);
-      if(d>.33){if(Math.hypot(us[0]-me[0],us[1]-me[1])<.25&&Math.hypot(ue[0]-ms[0],ue[1]-ms[1])<.25)rev++;else bad++;}}
-    if(bad){score-=10;notes.push('획순이 다른 것 같아요. 빨간 번호 순서대로 써 보세요');}
-    if(rev){score-=6;notes.push(`${rev}개 획의 방향이 반대예요`);}
-    if(!bad&&!rev)notes.push('획순과 방향도 좋아요');}
-  return {score:Math.round(Math.max(0,Math.min(100,score))),notes};}
+  if(dn)notes.push(`참고: 획 수 ${user.length}획 · 정답은 ${model.length}획`);
+  else{let bad=0;for(let i=0;i<M.length;i++){const us=U[i][0],ms=M[i][0];if(Math.hypot(us[0]-ms[0],us[1]-ms[1])>.35)bad++;}
+    notes.push(bad?'참고: 획순은 빨간 번호 순서를 확인해 보세요':'획 수와 획순도 좋아요');}
+  return {score,notes};}
 function wCheck(){const ch=W.list[W.i];const r=scoreWrite(ch);if(!r){toast('칸 안에 글자를 써 주세요');return}
   W.checked=r;const k=wKey(ch);const o=S.write[k]||{n:0,best:0};o.n++;o.last=r.score;o.best=Math.max(o.best,r.score);o.t=now();S.write[k]=o;
-  W.scores=W.scores.filter(x=>x[0]!==ch);W.scores.push([ch,r.score]);addXP(r.score>=60?3:1);S.stat.written=(S.stat.written||0)+1;save();sfx(r.score>=60?'ok':'ng');badgeToast(checkBadges());renderWrite();if(S.set.auto)say(ch);}
+  W.scores=W.scores.filter(x=>x[0]!==ch);W.scores.push([ch,r.score]);addXP(r.score>=WPASS?3:1);S.stat.written=(S.stat.written||0)+1;save();sfx(r.score>=WPASS?'ok':'ng');badgeToast(checkBadges());renderWrite();if(S.set.auto)say(ch);
+  if(r.score>=WPASS){const at=W.i;clearTimeout(W.adv);W.adv=setTimeout(()=>{if(tab==='write'&&W.i===at&&W.checked&&W.list[W.i]===ch){W.i++;wReset();renderWrite();if(W.i<W.list.length&&S.set.auto)say(W.list[W.i]);}},1600);}}
 $('#wArea').addEventListener('click',e=>{const t=e.target;const ch=W.list[W.i];
   if(t.closest('#wSay')){if(ch)say(ch)}
   else if(t.closest('#wAnim')){if(!ch)return;W.anim=true;const svg=$('#padSvg');svg.innerHTML='';void svg.offsetWidth;showModel(true);say(ch);}
   else if(t.closest('#wUndo')){W.strokes.pop();drawPad();}
   else if(t.closest('#wClear')){W.strokes=[];$('#padSvg').innerHTML='';drawPad();}
   else if(t.closest('#wCheck'))wCheck();
-  else if(t.closest('#wRetry')){wReset();renderWrite();}
+  else if(t.closest('#wRetry')){clearTimeout(W.adv);wReset();renderWrite();}
   else if(t.closest('#wNext')){W.i++;wReset();renderWrite();if(W.i<W.list.length&&S.set.auto)say(W.list[W.i]);}
   else if(t.closest('#wAgain')){W.list=W.scores.map(x=>x[0]);W.i=0;W.scores=[];wReset();renderWrite();}
   else if(t.closest('#wNextRow')){if(W.row!=='mix'&&W.row!=='weak'){const i=WROWS.findIndex(r=>r[0]===W.row);W.row=WROWS[(i+1)%WROWS.length][0];}wStart();}});

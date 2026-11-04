@@ -1,1 +1,1 @@
-{"appId":"io.github.incastle.hitorikeiko","appName":"ひとり稽古","webDir":"www","android":{"backgroundColor":"#EEF2F1","adjustMarginsForEdgeToEdge":"auto"},"plugins":{"SystemBars":{"insetsHandling":"css"}}}
+{"appId": "io.github.incastle.hitorikeiko", "appName": "\u3072\u3068\u308a\u7a3d\u53e4", "webDir": "www", "android": {"backgroundColor": "#EEF2F1", "adjustMarginsForEdgeToEdge": "force"}, "plugins": {"SystemBars": {"insetsHandling": "css"}}}
