@@ -30,15 +30,23 @@ jobs:
           sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/; s/versionName \"[^\"]+\"/versionName \"1.${{ github.run_number }}\"/" android/app/build.gradle
           grep -E "versionCode|versionName" android/app/build.gradle
       - run: npx cap sync android
-      - name: Build APK
+      - name: Build APK (signed with the repo key so updates install over the old app)
         run: |
-          mkdir -p ~/.android && cp android-debug.keystore ~/.android/debug.keystore
-          cd android && ./gradlew assembleDebug --no-daemon
-          cp app/build/outputs/apk/debug/app-debug.apk ../hitori-keiko.apk
+          cd android && ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android-debug.keystore \
+            -Pandroid.injected.signing.store.password=android \
+            -Pandroid.injected.signing.key.alias=androiddebugkey \
+            -Pandroid.injected.signing.key.password=android
+          ls app/build/outputs/apk/release/
+          cp app/build/outputs/apk/release/app-release.apk ../hitori-keiko.apk
+      - name: Check signature
+        run: |
+          keytool -exportcert -keystore android-debug.keystore -storepass android -alias androiddebugkey -file key.der
+          python3 -c "import sys;d=open('key.der','rb').read();b=open('hitori-keiko.apk','rb').read();sys.exit(0 if d in b else 'APK is not signed with the repo key')"
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.${{ github.run_number }}
           name: ひとり稽古 1.${{ github.run_number }}
-          body: "휴대폰에서 hitori-keiko.apk를 받아 설치하세요. 이전 버전 위에 그대로 덮어 설치하면 진도가 유지돼요."
+          body: "휴대폰에서 hitori-keiko.apk를 받아 설치하세요. 1.7 이후 버전끼리는 덮어 설치하면 진도가 유지돼요."
           files: hitori-keiko.apk
           make_latest: true
