@@ -1,0 +1,45 @@
+name: Android APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: apk
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - run: npm install --no-audit --no-fund
+      - name: Stamp version
+        run: sed -i "s/__VER__/1.${{ github.run_number }}/" www/index.html
+      - run: npx cap add android
+      - run: npx capacitor-assets generate --android
+      - name: Set app version
+        run: |
+          sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/; s/versionName \"[^\"]+\"/versionName \"1.${{ github.run_number }}\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
+      - run: npx cap sync android
+      - name: Build APK
+        run: |
+          mkdir -p ~/.android && cp android-debug.keystore ~/.android/debug.keystore
+          cd android && ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk ../hitori-keiko.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: ひとり稽古 1.${{ github.run_number }}
+          body: "휴대폰에서 hitori-keiko.apk를 받아 설치하세요. 이전 버전 위에 그대로 덮어 설치하면 진도가 유지돼요."
+          files: hitori-keiko.apk
+          make_latest: true

@@ -1,0 +1,2 @@
+{"name":"ひとり稽古 · 혼공 일본어","short_name":"ひとり稽古","description":"아는 건 건너뛰고 틀린 것만 다시 하는 일본어 연습","start_url":"./","scope":"./","display":"standalone","orientation":"portrait","background_color":"#24427A","theme_color":"#24427A","lang":"ko",
+"icons":[{"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"icons/maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}
