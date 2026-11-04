@@ -17,7 +17,7 @@ jobs:
       name: github-pages
       url: ${{ steps.dep.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Stamp version
         run: |
           sed -i "s/__VER__/1.${{ github.run_number }}/" www/index.html
